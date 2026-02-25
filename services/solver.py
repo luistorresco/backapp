@@ -176,12 +176,13 @@ def graphical(matrix, constants=None):
         
     det = matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]
     solution = None
+    error = None
     if det != 0:
         x = (constants[0]*matrix[1][1] - constants[1]*matrix[0][1]) / det
         y = (matrix[0][0]*constants[1] - matrix[1][0]*constants[0]) / det
         solution = [round(x, 4), round(y, 4)]
         steps.append({"description": "Intersección encontrada", "solution": solution})
     else:
-        raise ValueError("Las líneas son paralelas (sin solución) o coincidentes (infinitas soluciones)")
+        error = "Las líneas son paralelas (sin solución) o coincidentes (infinitas soluciones)"
         
-    return {"steps": steps, "solution": solution, "lines": lines}
+    return {"steps": steps, "solution": solution, "lines": lines, "error": error}
