@@ -154,7 +154,24 @@ def graphical(matrix, constants=None):
             x = c / a
             pts = [{"x": round(x, 2), "y": -10}, {"x": round(x, 2), "y": 10}]
             
-        lines.append({"equation": f"Eq {i+1}", "points": pts})
+        # Build human-readable equation string e.g. "2x + y = 4"
+        def fmt_coeff(val, var, is_first):
+            if val == 0:
+                return ""
+            abs_v = abs(val)
+            num = int(abs_v) if abs_v == int(abs_v) else round(abs_v, 2)
+            coeff_str = "" if num == 1 else str(num)
+            term = f"{coeff_str}{var}"
+            if is_first:
+                return f"-{term}" if val < 0 else term
+            return f" - {term}" if val < 0 else f" + {term}"
+
+        eq_a = fmt_coeff(a, "x", True)
+        eq_b_str = fmt_coeff(b, "y", eq_a == "")
+        c_disp = int(c) if c == int(c) else round(c, 2)
+        eq_str = f"{eq_a}{eq_b_str} = {c_disp}"
+
+        lines.append({"equation": eq_str, "points": pts})
         steps.append({"description": f"Puntos calculados para Eq {i+1}", "points": pts})
         
     det = matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]

@@ -12,6 +12,8 @@ class MatrixInput(BaseModel):
 class SolutionResponse(BaseModel):
     steps: List[Dict[str, Any]]
     solution: Optional[Any] = None
+    inverse: Optional[Any] = None
+    lines: Optional[List[Dict[str, Any]]] = None
     error: Optional[str] = None
 
 @router.post("/gauss-jordan", response_model=SolutionResponse)
