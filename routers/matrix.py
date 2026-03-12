@@ -43,3 +43,10 @@ def solve_graphical(data: MatrixInput):
         return solver.graphical(data.matrix, data.constants)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/cramer", response_model=SolutionResponse)
+def solve_cramer(data: MatrixInput):
+    try:
+        return solver.cramer(data.matrix, data.constants)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -2,7 +2,7 @@ import copy
 
 def gauss_jordan(matrix, constants=None):
     if constants and len(matrix) != len(constants):
-        raise ValueError("Matrix rows must match number of constants.")
+        raise ValueError("Las filas de la matriz deben coincidir con el número de constantes.")
 
     if constants:
         aug = [row + [c] for row, c in zip(matrix, constants)]
@@ -85,7 +85,7 @@ def inverse_matrix(matrix, constants=None):
     solution = None
     if constants:
         if len(constants) != rows:
-            raise ValueError("Constants dimension mismatch")
+            raise ValueError("Discrepancia en las dimensiones de las constantes")
         solution = [round(sum(inverse[i][j] * constants[j] for j in range(rows)), 4) for i in range(rows)]
         steps.append({"description": "Solución multiplicando inversa por constantes", "matrix": [[s] for s in solution]})
         
@@ -186,3 +186,54 @@ def graphical(matrix, constants=None):
         error = "Las líneas son paralelas (sin solución) o coincidentes (infinitas soluciones)"
         
     return {"steps": steps, "solution": solution, "lines": lines, "error": error}
+
+def get_determinant(matrix):
+    if len(matrix) == 1:
+        return matrix[0][0]
+    if len(matrix) == 2:
+        return matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]
+        
+    det = 0
+    for c in range(len(matrix)):
+        submatrix = [row[:c] + row[c+1:] for row in matrix[1:]]
+        sign = (-1) ** c
+        det += sign * matrix[0][c] * get_determinant(submatrix)
+    return det
+
+def cramer(matrix, constants=None):
+    if not constants:
+        raise ValueError("La regla de Cramer requiere constantes (términos independientes).")
+    
+    rows = len(matrix)
+    cols = len(matrix[0])
+    
+    if rows != cols:
+        raise ValueError("La regla de Cramer requiere una matriz cuadrada (mismo número de ecuaciones que de variables).")
+        
+    if len(constants) != rows:
+        raise ValueError("El número de constantes debe coincidir con el número de ecuaciones.")
+        
+    steps = [{"description": "Matriz del sistema", "matrix": copy.deepcopy(matrix)}]
+    
+    det_sys = get_determinant(matrix)
+    steps.append({"description": f"Determinante del sistema (Δ) = {round(det_sys, 4)}"})
+    
+    if abs(det_sys) < 1e-9:
+        raise ValueError("El determinante del sistema es 0. La regla de Cramer no es aplicable (el sistema no tiene solución única).")
+        
+    solution = []
+    
+    for i in range(cols):
+        mod_matrix = [row[:] for row in matrix]
+        for r in range(rows):
+            mod_matrix[r][i] = constants[r]
+            
+        steps.append({"description": f"Matriz para la variable x{i+1} (Reemplazando columna {i+1} por constantes)", "matrix": mod_matrix})
+        
+        det_var = get_determinant(mod_matrix)
+        val = det_var / det_sys
+        solution.append(round(val, 4))
+        
+        steps.append({"description": f"Determinante (Δx{i+1}) = {round(det_var, 4)} -> x{i+1} = {round(det_var, 4)} / {round(det_sys, 4)} = {round(val, 4)}"})
+        
+    return {"steps": steps, "solution": solution}
