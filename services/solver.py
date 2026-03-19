@@ -95,7 +95,7 @@ def gauss_jordan(matrix, constants=None):
         # Normalizar la fila pivot para que el pivot sea 1
         if pivot != 1:
             aug[r] = [val / pivot for val in aug[r]]
-            steps.append({"description": f"F{r+1} / {pivot:.2f}", "matrix": copy.deepcopy(aug)})
+            steps.append({"description": f"F{r+1} / {_to_frac(pivot)}", "matrix": copy.deepcopy(aug)})
 
         pivots.append((r, c))
 
@@ -105,7 +105,7 @@ def gauss_jordan(matrix, constants=None):
                 factor = aug[k][c]
                 if factor != 0:
                     aug[k] = [val_k - factor * val_r for val_k, val_r in zip(aug[k], aug[r])]
-                    steps.append({"description": f"F{k+1} - ({factor:.2f})*F{r+1}", "matrix": copy.deepcopy(aug)})
+                    steps.append({"description": f"F{k+1} - ({_to_frac(factor)})*F{r+1}", "matrix": copy.deepcopy(aug)})
         
         r += 1
 
@@ -145,14 +145,14 @@ def gauss_jordan(matrix, constants=None):
                     expr_parts = []
 
                     if abs(const_val) > 1e-9:
-                        expr_parts.append(f"{round(const_val, 4)}")
+                        expr_parts.append(f"{_to_frac(const_val)}")
 
                     for free_c in free_vars:
                         coef = aug[r_idx][free_c]
                         if abs(coef) > 1e-9:
                             sign = "+" if -coef > 0 else "-"
                             val = abs(-coef)
-                            str_val = "" if abs(val - 1.0) < 1e-9 else f"{round(val, 4)}"
+                            str_val = "" if abs(val - 1.0) < 1e-9 else f"{_to_frac(val)}"
                             param_name = solution_dict[f"x{free_c+1}"]
                             expr_parts.append(f"{sign} {str_val}{param_name}")
 
@@ -168,9 +168,9 @@ def gauss_jordan(matrix, constants=None):
             else:
                 solution_type = "Única"
                 message = "El sistema tiene una solución única."
-                solution = [0.0] * var_cols
+                solution = ["0"] * var_cols
                 for r_idx, c_idx in pivots:
-                    solution[c_idx] = round(aug[r_idx][-1], 4)
+                    solution[c_idx] = _to_frac(aug[r_idx][-1])
 
     return {
         "steps": steps, 
@@ -236,7 +236,7 @@ def inverse_matrix(matrix, constants=None):
         # Normalizar la fila pivot
         if pivot != 1:
             aug[i] = [val / pivot for val in aug[i]]
-            steps.append({"description": f"F{i+1} / {pivot:.2f}", "matrix": copy.deepcopy(aug)})
+            steps.append({"description": f"F{i+1} / {_to_frac(pivot)}", "matrix": copy.deepcopy(aug)})
 
         # Eliminar todos los demás elementos de la columna
         for k in range(rows):
@@ -244,7 +244,7 @@ def inverse_matrix(matrix, constants=None):
                 factor = aug[k][i]
                 if factor != 0:
                     aug[k] = [val_k - factor * val_i for val_k, val_i in zip(aug[k], aug[i])]
-                    steps.append({"description": f"F{k+1} - ({factor:.2f})*F{i+1}", "matrix": copy.deepcopy(aug)})
+                    steps.append({"description": f"F{k+1} - ({_to_frac(factor)})*F{i+1}", "matrix": copy.deepcopy(aug)})
 
     # Extraer la parte derecha de la matriz ampliada: esa es A⁻¹
     inverse = [[round(val, 4) for val in row[rows:]] for row in aug]
@@ -256,7 +256,7 @@ def inverse_matrix(matrix, constants=None):
         if len(constants) != rows:
             raise ValueError("Discrepancia en las dimensiones de las constantes")
         solution = [
-            round(sum(inverse[i][j] * constants[j] for j in range(rows)), 4)
+            _to_frac(sum(inverse[i][j] * constants[j] for j in range(rows)))
             for i in range(rows)
         ]
         steps.append({"description": "Solución multiplicando inversa por constantes", "matrix": [[s] for s in solution]})
@@ -324,7 +324,7 @@ def reduction(matrix, constants=None):
             factor = aug[k][i] / pivot
             if factor != 0:
                 aug[k] = [val_k - factor * val_i for val_k, val_i in zip(aug[k], aug[i])]
-                steps.append({"description": f"F{k+1} - ({factor:.2f})*F{i+1}", "matrix": copy.deepcopy(aug)})
+                steps.append({"description": f"F{k+1} - ({_to_frac(factor)})*F{i+1}", "matrix": copy.deepcopy(aug)})
 
     # Sustitución regresiva para hallar los valores de las variables
     solution = None
@@ -338,7 +338,7 @@ def reduction(matrix, constants=None):
                     raise ValueError("Sistema Incompatible")
             else:
                 ans[i] = val / aug[i][i]
-        solution = [round(x, 4) for x in ans]
+        solution = [_to_frac(x) for x in ans]
 
     return {"steps": steps, "solution": solution}
 
@@ -402,8 +402,8 @@ def graphical(matrix, constants=None):
             if val == 0:
                 return ""
             abs_v = abs(val)
-            num = int(abs_v) if abs_v == int(abs_v) else round(abs_v, 2)
-            coeff_str = "" if num == 1 else str(num)
+            num = _to_frac(abs_v)
+            coeff_str = "" if num == "1" else str(num)
             term = f"{coeff_str}{var}"
             if is_first:
                 return f"-{term}" if val < 0 else term
@@ -411,7 +411,7 @@ def graphical(matrix, constants=None):
 
         eq_a = fmt_coeff(a, "x", True)
         eq_b_str = fmt_coeff(b, "y", eq_a == "")
-        c_disp = int(c) if c == int(c) else round(c, 2)
+        c_disp = _to_frac(c)
         eq_str = f"{eq_a}{eq_b_str} = {c_disp}"
 
         lines.append({"equation": eq_str, "points": pts})
@@ -429,7 +429,7 @@ def graphical(matrix, constants=None):
             steps.append({
                 "description": (
                     f"Ecuación {i+1} Principal:\n{eq_str}\n\n"
-                    f"Despejando y:\ny = ({c_disp} - ({a}x)) / {b}\n\n"
+                    f"Despejando y:\ny = ({c_disp} - ({_to_frac(a)}x)) / {_to_frac(b)}\n\n"
                     f"Parametrizada:\n{param_str}"
                 ),
                 "points": pts
@@ -438,7 +438,7 @@ def graphical(matrix, constants=None):
             steps.append({
                 "description": (
                     f"Ecuación {i+1} Principal:\n{eq_str}\n\n"
-                    f"Despejando x:\nx = {c_disp} / {a}\n\n"
+                    f"Despejando x:\nx = {c_disp} / {_to_frac(a)}\n\n"
                     f"Parametrizada:\nx = {_to_frac(c / a)}"
                 ),
                 "points": pts
