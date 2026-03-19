@@ -259,7 +259,7 @@ def inverse_matrix(matrix, constants=None):
             _to_frac(sum(inverse[i][j] * constants[j] for j in range(rows)))
             for i in range(rows)
         ]
-        steps.append({"description": "Solución multiplicando inversa por constantes", "matrix": [[s] for s in solution]})
+        steps.append({"description": "Solución multiplicando inversa por constantes", "solution": solution})
 
     return {"steps": steps, "solution": solution, "inverse": inverse}
 
