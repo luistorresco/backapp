@@ -20,7 +20,7 @@ app = FastAPI(
         "Soporta los métodos: Gauss-Jordan, Inversa, Reducción Gaussiana, "
         "Gráfico y Regla de Cramer. Desarrollada con FastAPI y Python."
     ),
-    version="1.0.0",
+    version="3.1.2",
     contact={
         "name": "Equipo Juliga",
     },
@@ -38,7 +38,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],       # Orígenes permitidos (todos en desarrollo)
-    allow_credentials=True,    # Permite el envío de cookies/credenciales
+    allow_credentials=False,   # Deshabilitado para permitir "*" en allow_origins
     allow_methods=["*"],       # Métodos HTTP permitidos (GET, POST, etc.)
     allow_headers=["*"],       # Cabeceras HTTP permitidas
 )
