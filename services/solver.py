@@ -497,6 +497,59 @@ def get_determinant(matrix):
     return det
 
 
+def get_determinant_with_steps(matrix, name="Δ"):
+    """
+    Calcula el determinante y genera los pasos descriptivos para mostrar al usuario.
+    """
+    val = get_determinant(matrix)
+    steps = []
+    
+    n = len(matrix)
+    if n == 1:
+        steps.append({"description": f"Determinante ({name}) = {_to_frac(matrix[0][0])}"})
+    elif n == 2:
+        a, b = matrix[0]
+        c, d = matrix[1]
+        desc = (
+            f"Cálculo del Determinante ({name}):\n"
+            f"{name} = ({_to_frac(a)})({_to_frac(d)}) - ({_to_frac(b)})({_to_frac(c)})\n"
+            f"{name} = {_to_frac(a*d)} - {_to_frac(b*c)} = {_to_frac(val)}"
+        )
+        steps.append({"description": desc.replace(" - -", " + ")})
+    else:
+        parts = []
+        for col in range(n):
+            coef = matrix[0][col]
+            if abs(coef) < 1e-9:
+                continue
+            # Evaluamos la submatriz
+            sub = [row[:col] + row[col+1:] for row in matrix[1:]]
+            det_sub = get_determinant(sub)
+            
+            coef_str = _to_frac(abs(coef))
+            det_sub_str = _to_frac(det_sub)
+            
+            # Determine sign based on cofactor position and coefficient sign
+            term_sign = "+" if (col % 2 == 0) else "-"
+            if coef < 0:
+                # invert sign
+                term_sign = "-" if term_sign == "+" else "+"
+                
+            parts.append(f"{term_sign} {coef_str}·({det_sub_str})")
+            
+        desc = f"Cálculo del Determinante ({name}) (expansión por fila 1):\n"
+        if parts:
+            expansion = " ".join(parts).strip()
+            if expansion.startswith("+ "):
+                expansion = expansion[2:]
+            desc += f"{name} = {expansion}\n{name} = {_to_frac(val)}"
+        else:
+            desc += f"{name} = 0"
+        steps.append({"description": desc})
+        
+    return val, steps
+
+
 # ---------------------------------------------------------------------------
 # Regla de Cramer
 # ---------------------------------------------------------------------------
@@ -545,8 +598,8 @@ def cramer(matrix, constants=None):
     steps = [{"description": "Matriz del sistema", "matrix": copy.deepcopy(matrix)}]
 
     # Calcular el determinante principal Δ
-    det_sys = get_determinant(matrix)
-    steps.append({"description": f"Determinante del sistema (Δ) = {round(det_sys, 4)}"})
+    det_sys, sys_steps = get_determinant_with_steps(matrix, name="Δ")
+    steps.extend(sys_steps)
 
     if abs(det_sys) < 1e-9:
         raise ValueError(
@@ -567,14 +620,15 @@ def cramer(matrix, constants=None):
             "matrix": mod_matrix,
         })
 
-        det_var = get_determinant(mod_matrix)
+        det_var, var_steps = get_determinant_with_steps(mod_matrix, name=f"Δx{i+1}")
+        steps.extend(var_steps)
+        
         val = det_var / det_sys  # xᵢ = Δxᵢ / Δ
-        solution.append(round(val, 4))
+        solution.append(_to_frac(val))
 
         steps.append({
             "description": (
-                f"Determinante (Δx{i+1}) = {round(det_var, 4)} -> "
-                f"x{i+1} = {round(det_var, 4)} / {round(det_sys, 4)} = {round(val, 4)}"
+                f"x{i+1} = {_to_frac(det_var)} / {_to_frac(det_sys)} = {_to_frac(val)}"
             )
         })
 
