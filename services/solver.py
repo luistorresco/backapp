@@ -13,6 +13,17 @@ y la solución, compatible con el modelo `SolutionResponse` del router.
 """
 
 import copy
+from fractions import Fraction
+
+def _to_frac(val):
+    """Convierte un valor numérico a un string con formato de fracción entera o reducida."""
+    if val is None:
+        return ""
+    try:
+        f = Fraction(val).limit_denominator(1000)
+        return str(f.numerator) if f.denominator == 1 else f"{f.numerator}/{f.denominator}"
+    except (ValueError, TypeError):
+        return str(val)
 
 
 # ---------------------------------------------------------------------------
@@ -404,7 +415,36 @@ def graphical(matrix, constants=None):
         eq_str = f"{eq_a}{eq_b_str} = {c_disp}"
 
         lines.append({"equation": eq_str, "points": pts})
-        steps.append({"description": f"Puntos calculados para Ec {i+1}", "points": pts})
+        
+        # Despejando y parametrizando
+        if b != 0:
+            c_term = _to_frac(c / b)
+            a_term = _to_frac(-a / b)
+            sign = "" if a_term.startswith("-") else "+"
+            param_str = f"y = {c_term} {sign} {a_term}x".replace(" + -", " - ").replace("  ", " ").strip()
+            # Si c es 0, simplificar la parametrización
+            if c_term == "0":
+                param_str = f"y = {a_term}x"
+                
+            steps.append({
+                "description": (
+                    f"Ecuación {i+1} Principal:\n{eq_str}\n\n"
+                    f"Despejando y:\ny = ({c_disp} - ({a}x)) / {b}\n\n"
+                    f"Parametrizada:\n{param_str}"
+                ),
+                "points": pts
+            })
+        elif a != 0:
+            steps.append({
+                "description": (
+                    f"Ecuación {i+1} Principal:\n{eq_str}\n\n"
+                    f"Despejando x:\nx = {c_disp} / {a}\n\n"
+                    f"Parametrizada:\nx = {_to_frac(c / a)}"
+                ),
+                "points": pts
+            })
+        else:
+            steps.append({"description": f"Puntos calculados para Ec {i+1}", "points": pts})
 
     # Calcular la intersección usando la fórmula de Cramer para 2×2
     det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
@@ -412,9 +452,9 @@ def graphical(matrix, constants=None):
     error = None
 
     if det != 0:
-        x = (constants[0] * matrix[1][1] - constants[1] * matrix[0][1]) / det
-        y = (matrix[0][0] * constants[1] - matrix[1][0] * constants[0]) / det
-        solution = [round(x, 4), round(y, 4)]
+        x_val = (constants[0] * matrix[1][1] - constants[1] * matrix[0][1]) / det
+        y_val = (matrix[0][0] * constants[1] - matrix[1][0] * constants[0]) / det
+        solution = [_to_frac(x_val), _to_frac(y_val)]
         steps.append({"description": "Intersección encontrada", "solution": solution})
     else:
         error = "Las líneas son paralelas (sin solución) o coincidentes (infinitas soluciones)"
